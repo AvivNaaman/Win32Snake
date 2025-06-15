@@ -2,59 +2,34 @@
 #include <string>
 #include <queue>
 #include <random>
-enum class Direction
-{
-	Up = 0,
-	Down,
-	Left,
-	Right
-};
+#include "SnakeBody.hpp"
+#include "Config.hpp"
 
 static Direction currentDirection = Direction::Right; // Initial direction
 static Direction pendingDirection = Direction::Right; // Next direction
 
 
-static constexpr size_t BOARD_SIZE = 25;
-static constexpr size_t BOARD_RESOLUTION = 500;
-
 static constexpr COLORREF rgbRed = 0x000000FF;
 static constexpr COLORREF rgbGreen = 0x0000FF00;
 static constexpr COLORREF rgbWhite = 0x00FFFFFF;
+static const HBRUSH BACKGROUND_BRUSH = reinterpret_cast<HBRUSH>(COLOR_ACTIVECAPTION + 1);
 
-struct Point
-{
-	int x;
-	int y;
-	void draw(const HDC hdc, const COLORREF color) const {
+
+	/*void draw(const HDC hdc, const COLORREF color) const {
 		const auto brush = CreateSolidBrush(color);
 		fill(hdc, brush);
 	}
 	void clear(const HDC hdc) const {
 		fill(hdc, (HBRUSH)(COLOR_ACTIVECAPTION + 1));
-	}
-	bool operator==(const Point& other) const {
-		return other.x == x && other.y == y;
-	}
+	}*/
 
-private:
-	void fill(const HDC hdc, const HBRUSH brush) const {
-		static constexpr size_t ratio = (BOARD_RESOLUTION / BOARD_SIZE);
-		RECT r{
-			static_cast<DWORD>(x * ratio),
-			static_cast<DWORD>(y * ratio),
-			static_cast<DWORD>((x + 1) * ratio),
-			static_cast<DWORD>((y + 1) * ratio)
-		};
-		FillRect(hdc, &r, brush);
-	}
-};
-static std::queue<Point> snakeBody; // Queue to hold the snake's body segments
+static SnakeBody g__snake_body;
 static Point food; // Position of the food
 
 void nextFood() {
 	std::random_device rd;  // a seed source for the random number engine
 	std::mt19937 gen(rd()); // mersenne_twister_engine seeded with rd()
-	std::uniform_int_distribution<> distrib(0, BOARD_SIZE - 1);
+	std::uniform_int_distribution<uint32_t> distrib(0, Config::BOARD_SIZE - 1);
 
 	food = Point{
 		distrib(gen),
@@ -77,7 +52,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		// All painting occurs here, between BeginPaint and EndPaint.
 
-		FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_ACTIVECAPTION + 1));
+		FillRect(hdc, &ps.rcPaint, BACKGROUND_BRUSH);
 
 		EndPaint(hwnd, &ps);
 	}
@@ -129,66 +104,27 @@ void SnakeTimerproc(
 		OutputDebugStringW(directionString.c_str());
 	}
 
-
-
-
-	const Point snake_head = snakeBody.back();
-
-	Point next = snake_head;
-
-	if (snake_head.x == 0 && currentDirection == Direction::Left) {
-		next.x = BOARD_SIZE - 1;
-	}
-	else if (snake_head.y == 0 && currentDirection == Direction::Up) {
-		next.y = BOARD_SIZE - 1;
-	}
-	else if (snake_head.x == BOARD_SIZE - 1 && currentDirection == Direction::Right) {
-		next.x = 0;
-	}
-	else if (snake_head.y == BOARD_SIZE-1 && currentDirection == Direction::Down) {
-		next.y = 0;
-	}
-	else {
-
-		switch (currentDirection) {
-		case Direction::Down:
-			next.y += 1;
-			break;
-		case Direction::Up:
-			next.y -= 1;
-			break;
-		case Direction::Left:
-			next.x -= 1;
-			break;
-		case Direction::Right:
-			next.x += 1;
-			break;
-		}
-	}
+	g__snake_body.step(currentDirection);
 
 	const HDC hdc = GetDC(unnamedParam1);
 
-	std::queue<Point> snakeBodyCopy = snakeBody;
-	for (; !snakeBodyCopy.empty(); snakeBodyCopy.pop()) {
-		const Point &p = snakeBodyCopy.front();
-		if (p == next) {
-			KillTimer(unnamedParam1, unnamedParam3);
-		}
+
+	if (g__snake_body.head_collides()) {
+		KillTimer(unnamedParam1, unnamedParam3);
+		return;
 	}
 
-	if (next == food) {
-		food.clear(hdc);
+	if (g__snake_body.head() == food) {
+		food.fill(hdc, BACKGROUND_BRUSH);
 		nextFood();
 	}
 	else {
-		const Point toPop = snakeBody.front();
-		snakeBody.pop();
-		toPop.clear(hdc);
+		const Point tail = g__snake_body.pop_tail();
+		tail.fill(hdc, BACKGROUND_BRUSH);
 	}
-	food.draw(hdc, rgbRed);
-
-	snakeBody.push(next);
-	next.draw(hdc, rgbGreen);
+	food.fill(hdc, CreateSolidBrush(rgbRed));
+	g__snake_body.head().fill(hdc, CreateSolidBrush(rgbGreen));
+	
 
 	ReleaseDC(unnamedParam1, hdc);
 }
@@ -208,7 +144,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 	static constexpr DWORD WINDOW_STYLE = WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME;
 
 	RECT windowRect = {
-		0, 0, BOARD_RESOLUTION, BOARD_RESOLUTION,
+		0, 0, Config::BOARD_RESOLUTION, Config::BOARD_RESOLUTION,
 	};
 	AdjustWindowRect(&windowRect, WINDOW_STYLE, false);
 	HWND hwnd = CreateWindowExW(
@@ -232,10 +168,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 
 	ShowWindow(hwnd, nCmdShow);
 
-	snakeBody.push(Point{
-		BOARD_SIZE / 2,
-		BOARD_SIZE / 2
-		});
 	nextFood();
 
 	const ULONG_PTR timerId = SetTimer(hwnd, 0, 500, SnakeTimerproc);
