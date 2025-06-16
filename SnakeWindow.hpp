@@ -18,6 +18,7 @@ protected:
 
 private:
 	void on_timer(const std::shared_ptr<Timer>& timer);
+	void game_over();
 
 private:
 	static void on_timer_cb(Window& this_window, const std::shared_ptr<Timer>& timer);

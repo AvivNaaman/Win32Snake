@@ -21,6 +21,8 @@ public:
 	[[nodiscard]] bool has_x(const uint32_t value) const;
 	[[nodiscard]] bool has_y(const uint32_t value) const;
 
+	[[nodiscard]] uint32_t size() const;
+
 private:
 	std::deque<Tile> _body;
 

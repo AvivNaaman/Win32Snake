@@ -87,6 +87,16 @@ DeviceContext Window::get_dc()
 	return DeviceContext(_handle);
 }
 
+void Window::message_box(const std::wstring& title, const std::wstring& content)
+{
+	const int mb_result = MessageBoxW(_handle, content.c_str(), title.c_str(), MB_OK);
+	static constexpr int MESSAGE_BOX_ERROR = 0;
+	if (mb_result == MESSAGE_BOX_ERROR && GetLastError() != ERROR_SUCCESS) 
+	{
+		throw std::exception("MessageBoxW() failed!");
+	}
+}
+
 LRESULT Window::callback(const UINT msg, const WPARAM w_param, const LPARAM l_param)
 {
 

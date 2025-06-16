@@ -1,6 +1,7 @@
 #include "SnakeWindow.hpp"
 #include "DeviceContext.hpp"
 #include <random>
+#include <string>
 
 SnakeWindow::SnakeWindow(const HINSTANCE instance) :
 	Window{
@@ -51,6 +52,7 @@ void SnakeWindow::on_timer(const std::shared_ptr<Timer>& timer)
 
 	if (_snake_body.head_collides_body()) {
 		timer->kill();
+		game_over();
 		return;
 	}
 
@@ -65,6 +67,15 @@ void SnakeWindow::on_timer(const std::shared_ptr<Timer>& timer)
 	_food.tile().fill(dc, CreateSolidBrush(Config::FOOD_COLOR));
 
 	_snake_body.head().fill(dc, CreateSolidBrush(Config::SNAKE_BODY_COLOR));
+}
+
+void SnakeWindow::game_over()
+{
+	static constexpr uint32_t SCORE_FACTOR = 10;
+	const uint32_t score = SCORE_FACTOR * _snake_body.size();
+	static constexpr std::wstring_view GAME_OVER_CAPTION = L"Game over!";
+	std::wstring game_over_message = L"Game over!\nYou scored " + std::to_wstring(score) + L" points!";
+	message_box(GAME_OVER_CAPTION.data(), game_over_message);
 }
 
 Direction SnakeWindow::vkey_to_direction(const WPARAM vkey)

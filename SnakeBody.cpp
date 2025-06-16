@@ -96,3 +96,8 @@ bool SnakeBody::has_y(const uint32_t y_value) const
 {
 	return std::any_of(_body.begin(), _body.end(), [y_value](const Tile& t) { return t.y() == y_value; });
 }
+
+uint32_t SnakeBody::size() const
+{
+	return static_cast<uint32_t>(_body.size());
+}

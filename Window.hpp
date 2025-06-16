@@ -23,6 +23,7 @@ public:
 	[[nodiscard]] bool has_timer(const uint64_t timer_id) const;
 
 	[[nodiscard]] DeviceContext get_dc();
+	void message_box(const std::wstring& title, const std::wstring& content);
 
 protected:
 	[[nodiscard]] virtual LRESULT callback(const UINT msg, const WPARAM w_param, const LPARAM l_param);
