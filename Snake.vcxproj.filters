@@ -27,7 +27,7 @@
     <ClCompile Include="DeviceContext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Point.cpp">
+    <ClCompile Include="Tile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Window.cpp">
@@ -45,6 +45,9 @@
     <ClCompile Include="SnakeWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Food.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SnakeBody.hpp">
@@ -56,7 +59,7 @@
     <ClInclude Include="Config.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Point.hpp">
+    <ClInclude Include="Tile.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DeviceContext.hpp">
@@ -75,6 +78,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SnakeWindow.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Food.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

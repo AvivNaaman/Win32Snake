@@ -1,6 +1,6 @@
-#include "Point.hpp"
+#include "Tile.hpp"
 
-void Point::fill(DeviceContextBase& dc, const HBRUSH brush) const
+void Tile::fill(DeviceContextBase& dc, const HBRUSH brush) const
 {
 	static constexpr float32_t ratio = static_cast<float32_t>(Config::BOARD_RESOLUTION) / Config::BOARD_SIZE;
 	static constexpr uint32_t NEXT_TILE = 1;

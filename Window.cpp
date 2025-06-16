@@ -3,11 +3,17 @@
 #include "Config.hpp"
 #include <exception>
 #include "Paint.hpp"
+#include <string>
 
 static constexpr std::wstring_view WINDOW_CLASS_NAME = L"SNAKE";
 static constexpr std::wstring_view WINDOW_NAME = L"Snake";
 
-Window::Window(const HINSTANCE hInstance, const RECT& windowRect) : _handle(initialize_window(hInstance, windowRect))
+static constexpr uint64_t INIT_PER_WINDOW_TIMER_ID = 1;
+
+Window::Window(const HINSTANCE instance, const RECT& rect, const std::wstring& name) :
+	_handle{ initialize_window(instance, rect, name) },
+	_timers{},
+	_timer_id_counter{ INIT_PER_WINDOW_TIMER_ID }
 {
 	const ULONG_PTR set_ptr_result = SetWindowLongPtrW(_handle, GWLP_USERDATA, reinterpret_cast<ULONG_PTR>(this));
 	if (set_ptr_result == NULL && GetLastError() != ERROR_SUCCESS) {
@@ -40,28 +46,26 @@ void Window::show()
 
 void Window::message_loop()
 {
-	static constexpr BOOL GET_MESSAGE_GOT_QUIT = false;
+	static constexpr BOOL GET_MESSAGE_GOT_QUIT = 0;
 	static constexpr DWORD NO_FILTER = 0;
-	MSG msg = { };
-	while (GetMessageW(&msg, _handle, NO_FILTER, NO_FILTER) != GET_MESSAGE_GOT_QUIT)
+	MSG msg{ };
+	while (GetMessageW(&msg, _handle, NO_FILTER, NO_FILTER) > GET_MESSAGE_GOT_QUIT)
 	{
-		static constexpr BOOL TRNASLATE_MESSAGE_W_FAILED = 0;
-		if (TranslateMessage(&msg) == TRNASLATE_MESSAGE_W_FAILED) {
-			OutputDebugStringW(L"[TRACE] TranslteMessage failed");
-		}
-
+		TranslateMessage(&msg);
 		DispatchMessageW(&msg);
 	}
 }
 
 std::shared_ptr<Timer> Window::set_timer(const std::chrono::milliseconds interval, std::function<void(Window&, const std::shared_ptr<Timer>&)> function)
 {
-	const auto timer = std::shared_ptr<Timer>(new Timer(_handle, interval, function, timers_callback));
+	const uint64_t timer_id = _timer_id_counter++;
+	const auto timer = std::shared_ptr<Timer>(new Timer{ _handle, timer_id, interval, function });
 	_timers.emplace(timer->id(), timer);
 	return timer;
 }
 
-std::shared_ptr<Timer> Window::get_timer(const uint64_t timer_id) {
+std::shared_ptr<Timer> Window::get_timer(const uint64_t timer_id)
+{
 	const auto& val = _timers.find(timer_id);
 	if (val == _timers.end()) {
 		throw std::exception("Could not locate timer with specified id!");
@@ -79,12 +83,11 @@ DeviceContext Window::get_dc()
 	return DeviceContext(_handle);
 }
 
-LRESULT Window::callback(const UINT uMsg, const WPARAM wParam, const LPARAM lParam)
+LRESULT Window::callback(const UINT msg, const WPARAM w_param, const LPARAM l_param)
 {
 
-	switch (uMsg)
+	switch (msg)
 	{
-
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
@@ -95,30 +98,48 @@ LRESULT Window::callback(const UINT uMsg, const WPARAM wParam, const LPARAM lPar
 		p.fill(Config::BACKGROUND_BRUSH);
 	}
 	return 0;
+	case WM_TIMER:
+	{
+		const uint64_t timer_id = w_param;
+		if (has_timer(timer_id))
+		{
+			const auto timer = get_timer(timer_id);
+			timer->_callback(*this, timer);
+			return 0;
+		}
 	}
-	return DefWindowProcW(_handle, uMsg, wParam, lParam);
+	break;
+	}
+	return DefWindowProcW(_handle, msg, w_param, l_param);
 }
 
-HWND Window::initialize_window(const HINSTANCE hInstance, const RECT& window_rect)
+HWND Window::initialize_window(const HINSTANCE hInstance, const RECT& window_rect, const std::wstring& name)
 {
-	initialize_window_class(hInstance);
+	register_window_class(hInstance);
 
 	static constexpr DWORD WINDOW_STYLE = WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME;
+	static constexpr HMENU NO_MENU = NULL;
+
+	static constexpr BOOL HAS_MENU = NO_MENU != NULL;
 	RECT final_window_rect = window_rect;
-	if (!AdjustWindowRect(&final_window_rect, WINDOW_STYLE, false)) {
-		throw std::exception("Failed to AdjustWindowRect()!");
+	if (!AdjustWindowRect(&final_window_rect, WINDOW_STYLE, HAS_MENU)) {
+		throw std::exception("Failed to Adjustwindow_rect()!");
 	}
 
-	const HWND handle = CreateWindowExW(
-		0,
+	static constexpr LPVOID NO_CREATE_PARAM = NULL;
+	static constexpr HWND NO_PARENT = NULL;
+	const HWND handle = CreateWindowW(
 		WINDOW_CLASS_NAME.data(),
-		WINDOW_NAME.data(),
+		name.c_str(),
 		WINDOW_STYLE,
-		CW_USEDEFAULT, CW_USEDEFAULT, final_window_rect.bottom, final_window_rect.right,
-		NULL,
-		NULL,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		final_window_rect.bottom,
+		final_window_rect.right,
+		NO_PARENT,
+		NO_MENU,
 		hInstance,
-		NULL
+		NO_CREATE_PARAM
 	);
 
 	if (handle == NULL) {
@@ -128,42 +149,36 @@ HWND Window::initialize_window(const HINSTANCE hInstance, const RECT& window_rec
 	return handle;
 }
 
-void Window::initialize_window_class(const HINSTANCE hInstance)
+void Window::register_window_class(const HINSTANCE hInstance)
 {
-	static bool initialized = false;
-	if (initialized) {
+	static bool registered = false;
+	if (registered)
+	{
 		return;
 	}
 
-	WNDCLASSW wc = { };
+	WNDCLASSW class_to_regsiter = { };
 
-	wc.lpfnWndProc = window_callback_proc;
-	wc.hInstance = hInstance;
-	wc.lpszClassName = WINDOW_CLASS_NAME.data();
+	class_to_regsiter.lpfnWndProc = window_callback_proc;
+	class_to_regsiter.hInstance = hInstance;
+	class_to_regsiter.lpszClassName = WINDOW_CLASS_NAME.data();
 
-	RegisterClassW(&wc);
+	static constexpr ATOM REGISTER_FAILED = 0;
+	if (RegisterClassW(&class_to_regsiter) == REGISTER_FAILED)
+	{
+		throw std::exception("Failed to register window class!");
+	}
 
-	initialized = true;
-
+	registered = true;
 }
 
-LRESULT Window::window_callback_proc(const HWND hwnd, const UINT uMsg, const WPARAM wParam, const LPARAM lParam)
+LRESULT Window::window_callback_proc(const HWND _window_handle, const UINT msg, const WPARAM w_param, const LPARAM l_param)
 {
-	Window* const win_this = reinterpret_cast<Window*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+	Window* const win_this = reinterpret_cast<Window*>(GetWindowLongPtrW(_window_handle, GWLP_USERDATA));
 	if (win_this == nullptr)
 	{
-		return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+		return DefWindowProcW(_window_handle, msg, w_param, l_param);
 	}
 
-	return win_this->callback(uMsg, wParam, lParam);
-}
-
-VOID Window::timers_callback(HWND hwnd, UINT a, UINT_PTR timer_id, DWORD c)
-{
-	Window* const window = reinterpret_cast<Window*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
-	if (window->has_timer(timer_id))
-	{
-		const auto timer = window->get_timer(timer_id);
-		timer->_callback(*window, timer);
-	}
+	return win_this->callback(msg, w_param, l_param);
 }

@@ -10,7 +10,7 @@
 class Window
 {
 public:
-	explicit Window(const HINSTANCE hInstance, const RECT& windowRect);
+	explicit Window(const HINSTANCE hInstance, const RECT& rect, const std::wstring& name);
 	virtual ~Window();
 
 
@@ -26,19 +26,19 @@ public:
 	DeviceContext get_dc();
 
 protected:
-	virtual LRESULT callback(const UINT uMsg, const WPARAM wParam, const LPARAM lParam);
+	virtual LRESULT callback(const UINT msg, const WPARAM w_param, const LPARAM l_param);
 
 private:
-	static HWND initialize_window(const HINSTANCE hInstance, const RECT& windowRect);
-	static void initialize_window_class(const HINSTANCE hInstance);
+	static HWND initialize_window(const HINSTANCE instance, const RECT& rect, const std::wstring& name);
+	static void register_window_class(const HINSTANCE instance);
 
 	static LRESULT CALLBACK window_callback_proc(const HWND hwnd, const UINT uMsg, const WPARAM wParam, const LPARAM lParam);
-	static VOID CALLBACK timers_callback(HWND hwnd, UINT, UINT_PTR, DWORD);
 
 private:
 	HWND _handle;
 
 private:
+	uint64_t _timer_id_counter;
 	std::map<uint64_t, std::shared_ptr<Timer>> _timers;
 };
 

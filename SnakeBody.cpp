@@ -1,9 +1,10 @@
 #include "SnakeBody.hpp"
 #include "Config.hpp"
+#include <algorithm>
 
 SnakeBody::SnakeBody() : _body()
 {
-	static const Point INIT_POINT_IN_MIDDLE{
+	static const Tile INIT_POINT_IN_MIDDLE{
 		Config::BOARD_SIZE / 2,
 		Config::BOARD_SIZE / 2,
 	};
@@ -13,8 +14,8 @@ SnakeBody::SnakeBody() : _body()
 
 void SnakeBody::step(const Direction direction)
 {
-	const Point& current_head = head();
-	Point next = head();
+	const Tile& current_head = head();
+	Tile next = head();
 
 	if (current_head.x() == 0 && direction == Direction::Left) {
 		next.set_x(Config::BOARD_SIZE - 1);
@@ -48,27 +49,27 @@ void SnakeBody::step(const Direction direction)
 	_body.push_front(std::move(next));
 }
 
-Point SnakeBody::pop_tail()
+Tile SnakeBody::pop_tail()
 {
-	const Point pt = _body.back();
+	const Tile pt = _body.back();
 	_body.pop_back();
 	return pt;
 }
 
-const Point& SnakeBody::head() const
+const Tile& SnakeBody::head() const
 {
 	return _body.front();
 }
 
-const Point& SnakeBody::tail() const
+const Tile& SnakeBody::tail() const
 {
 	return _body.back();
 }
 
-bool SnakeBody::head_collides() const
+bool SnakeBody::head_collides_body() const
 {
-	const Point& snake_head = head();
-	for (const Point& point : _body) {
+	const Tile& snake_head = head();
+	for (const Tile& point : _body) {
 		if (&snake_head == &point) {
 			continue;
 		}
@@ -77,4 +78,14 @@ bool SnakeBody::head_collides() const
 		}
 	}
 	return false;
+}
+
+bool SnakeBody::has_x(const uint32_t value) const
+{
+	return std::any_of(_body.begin(), _body.end(), [value](const Tile& t) {return t.x() == value; });
+}
+
+bool SnakeBody::has_y(const uint32_t value) const
+{
+	return std::any_of(_body.begin(), _body.end(), [value](const Tile& t) {return t.y() == value; });
 }
