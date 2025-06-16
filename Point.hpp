@@ -1,8 +1,10 @@
 #pragma once
 #include <cstdint>
 #include <Windows.h>
-#include "Config.hpp"
 #include <exception>
+
+#include "Config.hpp"
+#include "DeviceContextBase.hpp"
 
 class Point
 {
@@ -35,22 +37,7 @@ public:
 	void set_x(uint32_t x) { _x = x; }
 	void set_y(uint32_t y) { _y = y; }
 
-	void fill(const HDC hdc, const HBRUSH brush) const {
-		static constexpr float32_t ratio = static_cast<float32_t>(Config::BOARD_RESOLUTION) / Config::BOARD_SIZE;
-		static constexpr uint32_t NEXT_TILE = 1;
-		const RECT r{
-			static_cast<LONG>(_x * ratio),
-			static_cast<LONG>(_y * ratio),
-			static_cast<LONG>((_x + NEXT_TILE) * ratio),
-			static_cast<LONG>((_y + NEXT_TILE) * ratio)
-		};
-
-		const int fill_rect_result = FillRect(hdc, &r, brush);
-		static constexpr int FILL_RECT_FAIL = 0;
-		if (fill_rect_result == FILL_RECT_FAIL) {
-			throw std::exception("Failed to FillRect!");
-		}
-	}
+	void fill(DeviceContextBase& dc, const HBRUSH brush) const;
 
 private:
 	uint32_t _x, _y;
