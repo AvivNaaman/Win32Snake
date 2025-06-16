@@ -10,13 +10,13 @@ public:
 	~DeviceContext();
 
 private:
-	static HDC get_dc(const HWND window);
+	[[nodiscard]] static HDC get_dc(const HWND window);
 
 private:
 	const HWND _window;
 
 public:
-	DeviceContext(const DeviceContext& other) = delete;
-	DeviceContext& operator=(const DeviceContext& other) = delete;
+	DeviceContext(const DeviceContext&) = delete;
+	DeviceContext& operator=(const DeviceContext&) = delete;
 };
 

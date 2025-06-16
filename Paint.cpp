@@ -5,7 +5,8 @@ Paint::Paint(const HWND window) : DeviceContextBase(begin_paint(window, &_paint_
 {
 }
 
-Paint::~Paint() {
+Paint::~Paint() 
+{
 	try
 	{
 		if (!EndPaint(_window, &_paint_struct)) 

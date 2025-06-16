@@ -1,8 +1,7 @@
 #include <Windows.h>
 #include "SnakeWindow.hpp"
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int) {
-	SnakeWindow w(hInstance);
-	w.run();
+int WINAPI wWinMain(const HINSTANCE hInstance, HINSTANCE, PWSTR, int) {
+	SnakeWindow(hInstance).run();
 	return 0;
 }

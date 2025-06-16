@@ -2,6 +2,7 @@
 #include "Tile.hpp"
 #include "SnakeBody.hpp"
 #include <optional>
+
 class Food final
 {
 public:
@@ -10,14 +11,13 @@ public:
 
 public:
 	void next(const SnakeBody& avoid);
-	const Tile& tile() const;
+	[[nodiscard]] const Tile& tile() const;
 
 private:
 	Tile _tile;
 
 public:
-	Food(const Food& other) = delete;
+	Food(const Food&) = delete;
 	Food& operator=(const Food&) = delete;
-
 };
 

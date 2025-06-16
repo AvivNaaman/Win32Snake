@@ -16,7 +16,9 @@ Window::Window(const HINSTANCE instance, const RECT& rect, const std::wstring& n
 	_timer_id_counter{ INIT_PER_WINDOW_TIMER_ID }
 {
 	const ULONG_PTR set_ptr_result = SetWindowLongPtrW(_handle, GWLP_USERDATA, reinterpret_cast<ULONG_PTR>(this));
-	if (set_ptr_result == NULL && GetLastError() != ERROR_SUCCESS) {
+	static constexpr ULONG_PTR POSSIBLE_SET_WINDOW_LONG_PTR_FAIL = NULL;
+	if (set_ptr_result == POSSIBLE_SET_WINDOW_LONG_PTR_FAIL && GetLastError() != ERROR_SUCCESS)
+	{
 		if (!CloseWindow(_handle))
 		{
 			OutputDebugStringW(L"Failed to CloseWindow() on SetWindowLongPtrW error!");
@@ -34,7 +36,8 @@ Window::~Window()
 			OutputDebugStringW(L"Failed to CloseWindow()!");
 		}
 	}
-	catch (...) {
+	catch (...)
+	{
 		OutputDebugStringW(L"Exception in ~Window()!");
 	}
 }
@@ -56,10 +59,10 @@ void Window::message_loop()
 	}
 }
 
-std::shared_ptr<Timer> Window::set_timer(const std::chrono::milliseconds interval, std::function<void(Window&, const std::shared_ptr<Timer>&)> function)
+std::shared_ptr<Timer> Window::set_timer(const std::chrono::milliseconds interval, std::function<void(Window&, const std::shared_ptr<Timer>&)> callback)
 {
 	const uint64_t timer_id = _timer_id_counter++;
-	const auto timer = std::shared_ptr<Timer>(new Timer{ _handle, timer_id, interval, function });
+	const auto timer = std::shared_ptr<Timer>(new Timer{ _handle, timer_id, interval, callback });
 	_timers.emplace(timer->id(), timer);
 	return timer;
 }
@@ -67,7 +70,8 @@ std::shared_ptr<Timer> Window::set_timer(const std::chrono::milliseconds interva
 std::shared_ptr<Timer> Window::get_timer(const uint64_t timer_id)
 {
 	const auto& val = _timers.find(timer_id);
-	if (val == _timers.end()) {
+	if (val == _timers.end())
+	{
 		throw std::exception("Could not locate timer with specified id!");
 	}
 	return val->second;
@@ -121,8 +125,8 @@ HWND Window::initialize_window(const HINSTANCE hInstance, const RECT& window_rec
 	static constexpr HMENU NO_MENU = NULL;
 
 	static constexpr BOOL HAS_MENU = NO_MENU != NULL;
-	RECT final_window_rect = window_rect;
-	if (!AdjustWindowRect(&final_window_rect, WINDOW_STYLE, HAS_MENU)) {
+	RECT adjusted_rect = window_rect;
+	if (!AdjustWindowRect(&adjusted_rect, WINDOW_STYLE, HAS_MENU)) {
 		throw std::exception("Failed to Adjustwindow_rect()!");
 	}
 
@@ -134,8 +138,8 @@ HWND Window::initialize_window(const HINSTANCE hInstance, const RECT& window_rec
 		WINDOW_STYLE,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
-		final_window_rect.bottom,
-		final_window_rect.right,
+		adjusted_rect.bottom,
+		adjusted_rect.right,
 		NO_PARENT,
 		NO_MENU,
 		hInstance,

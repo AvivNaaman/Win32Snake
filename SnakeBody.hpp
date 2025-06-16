@@ -14,12 +14,12 @@ public:
 	void step(const Direction direction);
 	Tile pop_tail();
 
-	const Tile& head() const;
-	const Tile& tail() const;
+	[[nodiscard]] const Tile& head() const;
+	[[nodiscard]] const Tile& tail() const;
 
-	bool head_collides_body() const;
-	bool has_x(const uint32_t value) const;
-	bool has_y(const uint32_t value) const;
+	[[nodiscard]] bool head_collides_body() const;
+	[[nodiscard]] bool has_x(const uint32_t value) const;
+	[[nodiscard]] bool has_y(const uint32_t value) const;
 
 private:
 	std::deque<Tile> _body;

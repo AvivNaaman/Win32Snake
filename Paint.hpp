@@ -4,17 +4,21 @@
 class Paint final : public DeviceContextBase
 {
 public:
-	explicit Paint(const HWND _window);
+	explicit Paint(const HWND window);
 	~Paint() final;
 
 public:
 	void fill(const HBRUSH brush);
 
 private:
-	static HDC begin_paint(const HWND window, PAINTSTRUCT* const paint_struct);
+	[[nodiscard]] static HDC begin_paint(const HWND window, PAINTSTRUCT* const paint_struct);
 
 private:
 	PAINTSTRUCT _paint_struct;
-	HWND _window;
+	const HWND _window;
+
+public:
+	Paint(const Paint&) = delete;
+	Paint& operator=(const Paint&) = delete;
 };
 

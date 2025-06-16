@@ -87,7 +87,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Config.cpp" />
     <ClCompile Include="DeviceContext.cpp" />
     <ClCompile Include="DeviceContextBase.cpp" />
     <ClCompile Include="Food.cpp" />

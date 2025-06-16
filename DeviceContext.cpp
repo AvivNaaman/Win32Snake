@@ -5,9 +5,10 @@ DeviceContext::DeviceContext(const HWND window) : DeviceContextBase(get_dc(windo
 {
 }
 
-HDC DeviceContext::get_dc(const HWND window) {
+HDC DeviceContext::get_dc(const HWND window)
+{
 	const HDC hdc = GetDC(window);
-	if (hdc == NULL) 
+	if (hdc == NULL)
 	{
 		throw std::exception("Failed to initialize DeviceContext using GetDC(window)");
 	}
@@ -15,15 +16,15 @@ HDC DeviceContext::get_dc(const HWND window) {
 }
 
 DeviceContext::~DeviceContext() {
-	try 
+	try
 	{
 		static constexpr int RELEASE_DC_FAILURE = 0;
-		if (ReleaseDC(_window, _device_context) == RELEASE_DC_FAILURE) 
+		if (ReleaseDC(_window, _device_context) == RELEASE_DC_FAILURE)
 		{
 			OutputDebugStringW(L"Failed to ReleaseDC(_hdc)");
 		}
 	}
-	catch (...) 
+	catch (...)
 	{
 		OutputDebugStringW(L"Exception in ~DeviceContext()!");
 	}

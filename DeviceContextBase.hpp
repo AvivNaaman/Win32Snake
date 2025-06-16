@@ -14,7 +14,7 @@ protected:
 	const HDC _device_context;
 
 public:
-	DeviceContextBase(const DeviceContextBase& other) = delete;
-	DeviceContextBase& operator=(const DeviceContextBase& other) = delete;
+	DeviceContextBase(const DeviceContextBase&) = delete;
+	DeviceContextBase& operator=(const DeviceContextBase&) = delete;
 };
 
